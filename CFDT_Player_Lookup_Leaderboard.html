@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CFDT Player Lookup & Event Leaderboards</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b0b0b;color:#fff}
+.cfdt{max-width:1050px;margin:auto;padding:22px}
+.brand{font-size:13px;letter-spacing:2px;color:#aaa;text-transform:uppercase}
+h1{margin:6px 0 18px;font-size:32px}
+h2{margin:0 0 6px;font-size:25px}
+h3{margin:24px 0 10px;font-size:18px}
+.tabs{display:flex;gap:8px;margin:0 0 16px}
+.tab{flex:1;padding:13px;border:1px solid #444;background:#151515;color:#fff;border-radius:10px;font-weight:700;cursor:pointer}
+.tab.active{background:#2a2a2a;border-color:#777}
+.panel{display:none}
+.panel.active{display:block}
+.event-select{width:100%;padding:14px 16px;border-radius:10px;border:1px solid #444;background:#171717;color:#fff;font-size:16px;outline:none}
+.event-head{margin-top:14px;background:#141414;border:1px solid #333;border-radius:14px;padding:18px}
+.event-course{color:#aaa;margin-top:5px}
+.event-date{color:#888;margin-top:4px;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:14px}
+th,td{padding:11px 8px;border-bottom:1px solid #333;text-align:left}
+th{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.6px}
+tbody tr:hover{background:#191919}
+.pos{font-weight:700;width:55px}
+.player-link{color:#fff;text-decoration:underline;text-decoration-color:#555;cursor:pointer}
+.score{font-weight:700}
+.earn{font-weight:700}
+.search{width:100%;padding:15px 17px;border-radius:10px;border:1px solid #444;background:#171717;color:#fff;font-size:17px;outline:none}
+.search:focus{border-color:#888}
+.results{margin-top:8px}
+.result{padding:12px 14px;border-bottom:1px solid #333;cursor:pointer;background:#141414}
+.result:hover{background:#202020}
+.card{margin-top:16px;background:#141414;border:1px solid #333;border-radius:14px;padding:20px}
+.name{font-size:29px;font-weight:700;margin:0}
+.sub{color:#aaa;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.stat{background:#202020;border-radius:10px;padding:13px}
+.label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.7px}
+.value{font-size:21px;font-weight:700;margin-top:5px}
+.empty{padding:30px 10px;text-align:center;color:#999}
+.note{color:#888;font-size:12px;margin-top:12px}
+@media(max-width:650px){
+  .cfdt{padding:16px}
+  h1{font-size:27px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .card{padding:15px}
+  table{font-size:13px}
+  th,td{padding:9px 5px}
+  .hide-mobile{display:none}
+}
+</style>
+</head>
+<body>
+<div class="cfdt">
+  <div class="brand">Central Florida Development Tour</div>
+  <h1>Player & Event Center</h1>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('leaderboards',this)">Event Leaderboards</button>
+    <button class="tab" onclick="showPanel('players',this)">Player Lookup</button>
+  </div>
+
+  <section id="leaderboards" class="panel active">
+    <select id="eventSelect" class="event-select" onchange="showEvent()"></select>
+    <div id="eventBoard"></div>
+  </section>
+
+  <section id="players" class="panel">
+    <input id="search" class="search" autocomplete="off" placeholder="Search player name..." oninput="searchPlayers()">
+    <div id="results" class="results"></div>
+    <div id="profile"><div class="empty">Search for a CFDT player above.</div></div>
+  </section>
+</div>
+
+<script>
+const DATA=[{"player":"Andrew Deacon","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":89,"toPar":17,"finish":14,"earnings":0.0},{"player":"Trey James Bilardello","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":68,"toPar":-4,"finish":2,"earnings":226.67},{"player":"Jack Vanderschuur","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":67,"toPar":-5,"finish":1,"earnings":300.0},{"player":"Justin Childers","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":87,"toPar":15,"finish":12,"earnings":23.33},{"player":"Gauge Meadows","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":69,"toPar":-3,"finish":3,"earnings":120.0},{"player":"Justin Stromsnes","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":23.33},{"player":"Tyler Hayes","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":100.0},{"player":"Kenneth Ward","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":75,"toPar":3,"finish":8,"earnings":23.33},{"player":"Zak Farber","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":0.0},{"player":"Gavin Smith","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":93,"toPar":21,"finish":13,"earnings":0.0},{"player":"David Tao","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":81,"toPar":9,"finish":10,"earnings":0.0},{"player":"Chris Couch","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":73,"toPar":1,"finish":7,"earnings":0.0},{"player":"Chris Mari","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":76,"toPar":4,"finish":9,"earnings":0.0},{"player":"Lee Robertson","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":82,"toPar":10,"finish":11,"earnings":23.33},{"player":"Gauge Meadows","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":71,"toPar":-1,"finish":3,"earnings":140.0},{"player":"Yuqi Liu","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":66,"toPar":-6,"finish":1,"earnings":353.33},{"player":"Kenneth Ward","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":81,"toPar":9,"finish":6,"earnings":53.33},{"player":"David Tao","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":84,"toPar":12,"finish":8,"earnings":0.0},{"player":"Tyler Hayes","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":69,"toPar":-3,"finish":2,"earnings":160.0},{"player":"David Hunt","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":73,"toPar":1,"finish":4,"earnings":0.0},{"player":"Lee Robertson","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":78,"toPar":6,"finish":5,"earnings":0.0},{"player":"Chris Hancock","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":83,"toPar":11,"finish":7,"earnings":53.33},{"player":"Gauge Meadows","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":72,"toPar":2,"finish":1,"earnings":280.0},{"player":"Justin Stromsnes","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":73,"toPar":3,"finish":2,"earnings":155.0},{"player":"Justin Childers","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":80,"toPar":10,"finish":9,"earnings":40.0},{"player":"Chris Mari","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":76,"toPar":6,"finish":5,"earnings":45.0},{"player":"Andrew Deacon","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":94,"toPar":24,"finish":13,"earnings":0.0},{"player":"Matt Gunning","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":100,"toPar":30,"finish":15,"earnings":0.0},{"player":"Jack Vanderschuur","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":73,"toPar":3,"finish":2,"earnings":155.0},{"player":"Rashad Azeez","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":78,"toPar":8,"finish":7,"earnings":0.0},{"player":"David Tao","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":82,"toPar":12,"finish":10,"earnings":0.0},{"player":"Miguel Gomez A","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":89,"toPar":19,"finish":12,"earnings":0.0},{"player":"Greg Callahan","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":79,"toPar":9,"finish":8,"earnings":40.0},{"player":"Tyler Hayes","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":75,"toPar":5,"finish":4,"earnings":130.0},{"player":"David Hunt","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":76,"toPar":6,"finish":5,"earnings":85.0},{"player":"Lee Robertson","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":82,"toPar":12,"finish":10,"earnings":0.0},{"player":"Kyle Judd","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":95,"toPar":25,"finish":14,"earnings":0.0},{"player":"Blue Cordoba","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":107,"toPar":37,"finish":16,"earnings":0.0},{"player":"Gauge Meadows","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":72,"toPar":0,"finish":2,"earnings":160.0},{"player":"Adrian Singh","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":83,"toPar":11,"finish":6,"earnings":20.0},{"player":"Chris Fedorcek","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":85,"toPar":13,"finish":7,"earnings":0.0},{"player":"Zak Farber","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":72,"toPar":0,"finish":1,"earnings":210.0},{"player":"David Tao","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":87,"toPar":15,"finish":8,"earnings":10.0},{"player":"Justin Childers","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":84,"toPar":12,"finish":5,"earnings":0.0},{"player":"Kenneth Ward","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":83,"toPar":11,"finish":6,"earnings":40.0},{"player":"Chris Hancock","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":77,"toPar":5,"finish":3,"earnings":180.0},{"player":"Gauge Meadows","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":68,"toPar":-4,"finish":1,"earnings":366.67},{"player":"Yuqi Liu","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":69,"toPar":-3,"finish":2,"earnings":183.33},{"player":"Chris Couch","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":73,"toPar":1,"finish":3,"earnings":0.0},{"player":"David Hunt","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":73,"toPar":1,"finish":3,"earnings":0.0},{"player":"Lee Robertson","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":79,"toPar":7,"finish":5,"earnings":0.0}];
+const EVENTS=[{"name":"2026 Season Opener","meta":{"display":"2026 Season Opener","course":"ChampionsGate Country Club","date":"2026-08-03"},"rows":[{"player":"Jack Vanderschuur","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":67,"toPar":-5,"finish":1,"earnings":300.0,"displayFinish":1},{"player":"Trey James Bilardello","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":68,"toPar":-4,"finish":2,"earnings":226.67,"displayFinish":2},{"player":"Gauge Meadows","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":69,"toPar":-3,"finish":3,"earnings":120.0,"displayFinish":3},{"player":"Justin Stromsnes","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":23.33,"displayFinish":4},{"player":"Tyler Hayes","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":100.0,"displayFinish":4},{"player":"Zak Farber","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":70,"toPar":-2,"finish":4,"earnings":0.0,"displayFinish":4},{"player":"Chris Couch","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":73,"toPar":1,"finish":7,"earnings":0.0,"displayFinish":7},{"player":"Kenneth Ward","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":75,"toPar":3,"finish":8,"earnings":23.33,"displayFinish":8},{"player":"Chris Mari","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":76,"toPar":4,"finish":9,"earnings":0.0,"displayFinish":9},{"player":"David Tao","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":81,"toPar":9,"finish":10,"earnings":0.0,"displayFinish":10},{"player":"Lee Robertson","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":82,"toPar":10,"finish":11,"earnings":23.33,"displayFinish":11},{"player":"Justin Childers","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":87,"toPar":15,"finish":12,"earnings":23.33,"displayFinish":12},{"player":"Andrew Deacon","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":89,"toPar":17,"finish":14,"earnings":0.0,"displayFinish":13},{"player":"Gavin Smith","event":"2026 Season Opener","date":"2026-08-03","course":"ChampionsGate Country Club","score":93,"toPar":21,"finish":13,"earnings":0.0,"displayFinish":14}]},{"name":"2026 Clermont Open","meta":{"display":"2026 Clermont Open","course":"Legends Golf & Country Club","date":"2026-08-18"},"rows":[{"player":"Gauge Meadows","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":72,"toPar":2,"finish":1,"earnings":280.0,"displayFinish":1},{"player":"Jack Vanderschuur","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":73,"toPar":3,"finish":2,"earnings":155.0,"displayFinish":2},{"player":"Justin Stromsnes","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":73,"toPar":3,"finish":2,"earnings":155.0,"displayFinish":2},{"player":"Tyler Hayes","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":75,"toPar":5,"finish":4,"earnings":130.0,"displayFinish":4},{"player":"Chris Mari","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":76,"toPar":6,"finish":5,"earnings":45.0,"displayFinish":5},{"player":"David Hunt","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":76,"toPar":6,"finish":5,"earnings":85.0,"displayFinish":5},{"player":"Rashad Azeez","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":78,"toPar":8,"finish":7,"earnings":0.0,"displayFinish":7},{"player":"Greg Callahan","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":79,"toPar":9,"finish":8,"earnings":40.0,"displayFinish":8},{"player":"Justin Childers","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":80,"toPar":10,"finish":9,"earnings":40.0,"displayFinish":9},{"player":"David Tao","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":82,"toPar":12,"finish":10,"earnings":0.0,"displayFinish":10},{"player":"Lee Robertson","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":82,"toPar":12,"finish":10,"earnings":0.0,"displayFinish":10},{"player":"Miguel Gomez A","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":89,"toPar":19,"finish":12,"earnings":0.0,"displayFinish":12},{"player":"Andrew Deacon","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":94,"toPar":24,"finish":13,"earnings":0.0,"displayFinish":13},{"player":"Kyle Judd","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":95,"toPar":25,"finish":14,"earnings":0.0,"displayFinish":14},{"player":"Matt Gunning","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":100,"toPar":30,"finish":15,"earnings":0.0,"displayFinish":15},{"player":"Blue Cordoba","event":"2026 Clermont Open","date":"2026-08-18","course":"Legends Golf & Country Club","score":107,"toPar":37,"finish":16,"earnings":0.0,"displayFinish":16}]},{"name":"2026 Rio Pinar Open","meta":{"display":"2026 Rio Pinar Open","course":"Rio Pinar Golf & Country Club","date":"2026-09-05"},"rows":[{"player":"Gauge Meadows","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":72,"toPar":0,"finish":2,"earnings":160.0,"displayFinish":1},{"player":"Zak Farber","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":72,"toPar":0,"finish":1,"earnings":210.0,"displayFinish":1},{"player":"Chris Hancock","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":77,"toPar":5,"finish":3,"earnings":180.0,"displayFinish":3},{"player":"Adrian Singh","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":83,"toPar":11,"finish":6,"earnings":20.0,"displayFinish":4},{"player":"Kenneth Ward","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":83,"toPar":11,"finish":6,"earnings":40.0,"displayFinish":4},{"player":"Justin Childers","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":84,"toPar":12,"finish":5,"earnings":0.0,"displayFinish":6},{"player":"Chris Fedorcek","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":85,"toPar":13,"finish":7,"earnings":0.0,"displayFinish":7},{"player":"David Tao","event":"2026 Rio Pinar Open","date":"2026-09-05","course":"Rio Pinar Golf & Country Club","score":87,"toPar":15,"finish":8,"earnings":10.0,"displayFinish":8}]},{"name":"2026 Four Corners Open","meta":{"display":"2026 Four Corners Open","course":"The Legends at Orange Lake","date":"2026-09-15"},"rows":[{"player":"Gauge Meadows","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":68,"toPar":-4,"finish":1,"earnings":366.67,"displayFinish":1},{"player":"Yuqi Liu","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":69,"toPar":-3,"finish":2,"earnings":183.33,"displayFinish":2},{"player":"Chris Couch","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":73,"toPar":1,"finish":3,"earnings":0.0,"displayFinish":3},{"player":"David Hunt","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":73,"toPar":1,"finish":3,"earnings":0.0,"displayFinish":3},{"player":"Lee Robertson","event":"2026 Four Corners Open","date":"2026-09-15","course":"The Legends at Orange Lake","score":79,"toPar":7,"finish":5,"earnings":0.0,"displayFinish":5}]},{"name":"2026 Mount Dora Open","meta":{"display":"2026 Mount Dora Open","course":"The Country Club of Mount Dora","date":"2026-10-05"},"rows":[{"player":"Yuqi Liu","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":66,"toPar":-6,"finish":1,"earnings":353.33,"displayFinish":1},{"player":"Tyler Hayes","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":69,"toPar":-3,"finish":2,"earnings":160.0,"displayFinish":2},{"player":"Gauge Meadows","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":71,"toPar":-1,"finish":3,"earnings":140.0,"displayFinish":3},{"player":"David Hunt","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":73,"toPar":1,"finish":4,"earnings":0.0,"displayFinish":4},{"player":"Lee Robertson","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":78,"toPar":6,"finish":5,"earnings":0.0,"displayFinish":5},{"player":"Kenneth Ward","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":81,"toPar":9,"finish":6,"earnings":53.33,"displayFinish":6},{"player":"Chris Hancock","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":83,"toPar":11,"finish":7,"earnings":53.33,"displayFinish":7},{"player":"David Tao","event":"2026 Mount Dora Open","date":"2026-10-05","course":"The Country Club of Mount Dora","score":84,"toPar":12,"finish":8,"earnings":0.0,"displayFinish":8}]}];
+
+const byPlayer={};
+DATA.forEach(r=>{
+  if(!byPlayer[r.player]) byPlayer[r.player]=[];
+  byPlayer[r.player].push(r);
+});
+const names=Object.keys(byPlayer).sort();
+
+function money(n){
+  return "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function signed(n){
+  return n===0 ? "E" : (n>0 ? "+"+n : n);
+}
+function showPanel(id,btn){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+}
+function showEvent(){
+  const idx=Number(document.getElementById("eventSelect").value);
+  const ev=EVENTS[idx];
+  const rows=ev.rows;
+  const purse=rows.reduce((s,r)=>s+Number(r.earnings||0),0);
+  document.getElementById("eventBoard").innerHTML=`
+    <div class="event-head">
+      <h2>${ev.meta.display.replace("2026 ","")}</h2>
+      <div class="event-course">${ev.meta.course}</div>
+      <div class="event-date">${new Date(ev.meta.date+"T12:00:00").toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})} · ${rows.length} players</div>
+      <table>
+        <thead>
+          <tr><th>Pos</th><th>Player</th><th>Score</th><th>To Par</th><th>Earnings</th></tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr>
+              <td class="pos">${r.displayFinish}</td>
+              <td><span class="player-link" onclick="openPlayerFromEvent(${JSON.stringify(r.player)})">${r.player}</span></td>
+              <td class="score">${r.score}</td>
+              <td>${signed(r.toPar)}</td>
+              <td class="earn">${Number(r.earnings)>0 ? money(r.earnings) : "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+      <div class="note">Event earnings shown from Squabbit's official “Won” amount.</div>
+    </div>`;
+}
+function openPlayerFromEvent(name){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("players").classList.add("active");
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab")[1].classList.add("active");
+  showPlayer(name);
+}
+function searchPlayers(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const box=document.getElementById("results");
+  const profile=document.getElementById("profile");
+  if(!q){box.innerHTML="";profile.innerHTML='<div class="empty">Search for a CFDT player above.</div>';return;}
+  const matches=names.filter(n=>n.toLowerCase().includes(q)).slice(0,8);
+  box.innerHTML=matches.map(n=>`<div class="result" onclick="showPlayer(${JSON.stringify(n)})">${n}</div>`).join("");
+  if(matches.length===1) showPlayer(matches[0]);
+  else if(!matches.length) profile.innerHTML='<div class="empty">No player found.</div>';
+}
+function showPlayer(name){
+  document.getElementById("search").value=name;
+  document.getElementById("results").innerHTML="";
+  const rows=byPlayer[name].slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const earnings=rows.reduce((s,r)=>s+r.earnings,0);
+  const wins=rows.filter(r=>r.finish===1).length;
+  const top3=rows.filter(r=>r.finish<=3).length;
+  const top5=rows.filter(r=>r.finish<=5).length;
+  const top10=rows.filter(r=>r.finish<=10).length;
+  const avg=rows.reduce((s,r)=>s+r.score,0)/rows.length;
+  document.getElementById("profile").innerHTML=`
+  <div class="card">
+    <div class="name">${name}</div>
+    <div class="sub">CFDT Player Profile</div>
+    <div class="stats">
+      <div class="stat"><div class="label">Career Earnings</div><div class="value">${money(earnings)}</div></div>
+      <div class="stat"><div class="label">Events</div><div class="value">${rows.length}</div></div>
+      <div class="stat"><div class="label">Wins</div><div class="value">${wins}</div></div>
+      <div class="stat"><div class="label">Top 3s</div><div class="value">${top3}</div></div>
+      <div class="stat"><div class="label">Top 5s</div><div class="value">${top5}</div></div>
+      <div class="stat"><div class="label">Top 10s</div><div class="value">${top10}</div></div>
+      <div class="stat"><div class="label">Scoring Average</div><div class="value">${avg.toFixed(1)}</div></div>
+    </div>
+    <h3>Tournament History</h3>
+    <table>
+      <thead><tr><th>Event</th><th>Date</th><th>Score</th><th>Finish</th><th>Earnings</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${r.event.replace("2026 ","")}</td><td>${new Date(r.date+"T12:00:00").toLocaleDateString("en-US")}</td><td>${r.score} (${signed(r.toPar)})</td><td>${r.finish}</td><td>${money(r.earnings)}</td></tr>`).join("")}</tbody>
+    </table>
+  </div>`;
+}
+
+const sel=document.getElementById("eventSelect");
+EVENTS.forEach((ev,i)=>{
+  const opt=document.createElement("option");
+  opt.value=i;
+  opt.textContent=ev.meta.display.replace("2026 ","");
+  sel.appendChild(opt);
+});
+sel.value=EVENTS.length-1;
+showEvent();
+</script>
+</body>
+</html>
